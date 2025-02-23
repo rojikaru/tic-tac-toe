@@ -1,116 +1,106 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react'
-import { Button } from '@/components/ui'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui'
-import type { Player, GameState } from '@/types'
-
+import { useCallback, useEffect } from 'react';
+import { useMutation } from '@tanstack/react-query';
+import type { GameState } from '@/types';
+import { useGameStore } from '@/lib/stores';
+import { Button, Card, CardContent, CardHeader, CardTitle } from '@/components/ui';
 import styles from './game-board.module.css';
 
-export function GameBoard({ roomId }: GameBoardProps) {
-  const [board, setBoard] = useState<Player[]>(Array(9).fill(null))
-  const [currentPlayer, setCurrentPlayer] = useState<Player>("X")
-  const [winner, setWinner] = useState<Player | "Draw" | null>(null)
-  const [error, setError] = useState<string | null>(null)
-  const [isConnecting, setIsConnecting] = useState(false)
-  const [assignedPlayer, setAssignedPlayer] = useState<"X" | "O" | null>()
-  
-  // Join the game when component mounts
-  useEffect(() => {
-    const joinGame = async () => {
-      const response = await fetch(`/api/game/${roomId}/join`, { method: "POST" })
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || "Failed to join game")
-      }
-      const data = await response.json() as { player: "X" | "O" | null }
-      setAssignedPlayer(data.player)
-    }
-    joinGame().catch((error) => {
-      console.error("Error joining game:", error)
-      setError(error instanceof Error ? error.message : "Failed to join game")
-    })
-  }, [roomId])
+type GameStateProps = {
+  roomId: string;
+}
 
-  // Setup SSE connection to receive game state
+export function GameBoard({ roomId }: GameStateProps) {
+  const {
+    board,
+    currentPlayer,
+    winner,
+    error,
+    isConnecting,
+    assignedPlayer,
+    updateGameState,
+    resetGame,
+  } = useGameStore();
+
+  const joinGame = useMutation<GameState>({
+    mutationFn: async () => {
+      const response = await fetch(`/api/game/${roomId}/join`, { method: 'POST' });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to join game');
+      }
+      return response.json();
+    },
+    onSuccess: (data) => updateGameState({ assignedPlayer: data.assignedPlayer }),
+    onError: (error) => updateGameState({ error: error.message }),
+  });
+
+  const makeMove = useMutation({
+    mutationFn: async (index: number) => {
+      const response = await fetch(`/api/game/${roomId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ index }),
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update game state');
+      }
+    },
+    onError: (error) => updateGameState({ error: error.message }),
+  });
+
+  const resetGameMutation = useMutation({
+    mutationFn: async () => {
+      const response = await fetch(`/api/game/${roomId}/reset`, { method: 'POST' });
+      if (!response.ok) throw new Error('Failed to reset game');
+      resetGame();
+    },
+    onError: (error) => updateGameState({ error: error.message }),
+  });
+
   const setupEventSource = useCallback(() => {
-    setIsConnecting(true)
-    const eventSource = new EventSource(`/api/game/${roomId}`)
-    eventSource.onopen = () => {
-      setIsConnecting(false)
-      setError(null)
-    }
+    updateGameState({ isConnecting: true });
+    const eventSource = new EventSource(`/api/game/${roomId}`);
+
     eventSource.onmessage = (event) => {
       try {
-        const data: GameState = JSON.parse(event.data)
-        setBoard(data.board)
-        setCurrentPlayer(data.currentPlayer)
-        setWinner(data.winner)
+        const data = JSON.parse(event.data);
+        updateGameState({
+          board: data.board,
+          currentPlayer: data.currentPlayer,
+          winner: data.winner,
+          error: null,
+          isConnecting: false,
+        });
       } catch (error) {
-        console.error("Error parsing SSE data:", error)
-        setError("Error updating game state")
+        updateGameState({ error: 'Error updating game state' });
       }
-    }
-    eventSource.onerror = (error) => {
-      console.error("SSE error:", error)
-      setError("Error connecting to game server. Retrying...")
-      setIsConnecting(true)
-      eventSource.close()
-      setTimeout(setupEventSource, 5000)
-    }
-    return eventSource
-  }, [roomId])
+    };
+
+    eventSource.onerror = () => {
+      updateGameState({
+        error: 'Connection error. Retrying...',
+        isConnecting: true
+      });
+      eventSource.close();
+      setTimeout(setupEventSource, 5000);
+    };
+
+    return eventSource;
+  }, [roomId, updateGameState]);
 
   useEffect(() => {
-    const eventSource = setupEventSource()
-    return () => {
-      eventSource.close()
-    }
-  }, [setupEventSource])
+    joinGame.mutate();
+    const eventSource = setupEventSource();
+    return () => eventSource.close();
+  }, [setupEventSource]);
 
-  const handleCellClick = async (index: number) => {
-    // Only allow moves when assigned as a player, it's your turn and the cell is free.
-    if (board[index] || winner || isConnecting || assignedPlayer !== currentPlayer) return
-
-    try {
-      const response = await fetch(`/api/game/${roomId}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ index }),
-      })
-      const body = await response.json()
-      if (!response.ok) {
-        setError(body.error || "Failed to update game state")
-      }
-      const updatedState = body as GameState
-      setBoard(updatedState.board)
-      setCurrentPlayer(updatedState.currentPlayer)
-      setWinner(updatedState.winner)
-    } catch (error) {
-      console.error("Error updating game state:", error)
-      setError(error instanceof Error ? error.message : "Failed to update game state")
-    }
-  }
-
-  const handleReset = async () => {
-    try {
-      const response = await fetch(`/api/game/${roomId}/reset`, {
-        method: "POST",
-      })
-      if (!response.ok) {
-        setError("Failed to reset game");
-        return;
-      }
-      const updatedState = (await response.json()) as GameState
-      setBoard(updatedState.board)
-      setCurrentPlayer(updatedState.currentPlayer)
-      setWinner(updatedState.winner)
-      setError(null)
-    } catch (error) {
-      console.error("Error resetting game:", error)
-      setError(error instanceof Error ? error.message : "Failed to reset game")
-    }
-  }
+  const handleCellClick = (index: number) => {
+    if (board[index] || winner || isConnecting || assignedPlayer !== currentPlayer) return;
+    makeMove.mutate(index);
+  };
 
   return (
       <Card className={styles.card}>

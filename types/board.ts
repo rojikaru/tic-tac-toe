@@ -4,4 +4,5 @@ export type GameState = {
     currentPlayer: Player
     winner: Player | "Draw" | null
     players?: { X?: boolean; O?: boolean }  // added players tracking
+    assignedPlayer?: Player
 }

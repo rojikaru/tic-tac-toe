@@ -1,4 +1,4 @@
-import {GameState, Player} from "@/types";
+import { GameState, Player } from "@/types";
 import { redis } from "./db";
 
 export async function getGame(roomId: string): Promise<GameState | null> {
