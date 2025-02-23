@@ -5,9 +5,7 @@ import { Button } from '@/components/ui'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui'
 import type { Player, GameState } from '@/types'
 
-interface GameBoardProps {
-  roomId: string
-}
+import styles from './game-board.module.css';
 
 export function GameBoard({ roomId }: GameBoardProps) {
   const [board, setBoard] = useState<Player[]>(Array(9).fill(null))
@@ -115,41 +113,48 @@ export function GameBoard({ roomId }: GameBoardProps) {
   }
 
   return (
-    <Card className="w-96">
-      <CardHeader>
-        <CardTitle>Room: {roomId}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="mb-4 text-center">
-          {assignedPlayer === undefined ? "Joining game..." : assignedPlayer ? `You are player ${assignedPlayer}` : "You are a spectator"}
-        </div>
-        <div className="grid grid-cols-3 gap-2">
-          {board.map((cell, index) => (
-            <Button
-              key={index}
-              variant="outline"
-              className="h-24 text-4xl"
-              onClick={() => handleCellClick(index)}
-              disabled={isConnecting || winner !== null || board[index] !== null || assignedPlayer !== currentPlayer}
-            >
-              {cell}
-            </Button>
-          ))}
-        </div>
-        {winner && (
-          <div className="mt-4 text-center">
-            <div>{winner === "Draw" ? `It\'s a draw!` : `Player ${winner} wins!`}</div>
-            {assignedPlayer && (
-                <Button onClick={handleReset} className="mt-2" disabled={isConnecting}>
-                  Reset Game
-                </Button>
-            )}
+      <Card className={styles.card}>
+        <CardHeader>
+          <CardTitle>Room: {roomId}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className={'text-center'}>
+            {assignedPlayer === undefined ? "Joining game..." :
+                assignedPlayer ? `You are player ${assignedPlayer}` : "You are a spectator"}
           </div>
-        )}
-        {!winner && <div className="mt-4 text-center">Current player: {currentPlayer}</div>}
-        {error && <div className="mt-4 text-center text-red-500">{error}</div>}
-        {isConnecting && <div className="mt-4 text-center text-yellow-500">Connecting to server...</div>}
-      </CardContent>
-    </Card>
-  )
+          <div className={styles.grid}>
+            {board.map((cell, index) => (
+                <Button
+                    key={index}
+                    variant="outline"
+                    className={styles.button}
+                    onClick={() => handleCellClick(index)}
+                    disabled={isConnecting || winner !== null || board[index] !== null || assignedPlayer !== currentPlayer}
+                >
+                  {cell}
+                </Button>
+            ))}
+          </div>
+          {winner && (
+              <div className={styles.resetButton}>
+                <div className={'text-center'}>
+                  {winner === "Draw" ? "It's a draw!" : `Player ${winner} wins!`}
+                </div>
+                {assignedPlayer && (
+                    <Button
+                        onClick={() => resetGameMutation.mutate()}
+                        className={styles.resetButton}
+                        disabled={isConnecting}
+                    >
+                      Reset Game
+                    </Button>
+                )}
+              </div>
+          )}
+          {!winner && <div className={'text-center'}>Current player: {currentPlayer}</div>}
+          {error && <div className={styles.redText}>{error}</div>}
+          {isConnecting && <div className={styles.yellowText}>Connecting to server...</div>}
+        </CardContent>
+      </Card>
+  );
 }

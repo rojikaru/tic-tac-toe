@@ -1,0 +1,7 @@
+.card {
+    @apply w-96;
+}
+
+.flexContainer {
+    @apply flex gap-x-2;
+}

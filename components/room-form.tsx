@@ -6,6 +6,8 @@ import { Button } from "@/components/ui"
 import { Input } from "@/components/ui"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui"
 
+import styles from './room-form.module.css';
+
 export function RoomForm() {
   const [roomId, setRoomId] = useState("")
   const router = useRouter()
@@ -23,20 +25,24 @@ export function RoomForm() {
   }
 
   return (
-    <Card className="w-96">
-      <CardHeader>
-        <CardTitle>Join or Create a Room</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <Button onClick={handleCreateRoom} className="w-full">
-          Create New Room
-        </Button>
-        <div className="flex space-x-2">
-          <Input placeholder="Enter Room ID" value={roomId} onChange={(e) => setRoomId(e.target.value)} />
-          <Button onClick={handleJoinRoom}>Join Room</Button>
-        </div>
-      </CardContent>
-    </Card>
-  )
+      <Card className={styles.card}>
+        <CardHeader>
+          <CardTitle>Join or Create a Room</CardTitle>
+        </CardHeader>
+        <CardContent className={styles.spaceY4}>
+          <Button onClick={handleCreateRoom} className={'w-full'}>
+            Create New Room
+          </Button>
+          <div className={styles.flexContainer}>
+            <Input
+                placeholder="Enter Room ID"
+                value={roomId}
+                onChange={(e) => setRoomId(e.target.value)}
+            />
+            <Button onClick={handleJoinRoom}>Join Room</Button>
+          </div>
+        </CardContent>
+      </Card>
+  );
 }
 
