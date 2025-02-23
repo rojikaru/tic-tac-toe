@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { setGame } from "../games"
+import { setGame } from "@/app/api/games"
 
 function generateRoomId(length: number): string {
   const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"

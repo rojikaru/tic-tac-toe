@@ -1,8 +1,9 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { getGame, setGame, GameState } from "../../../games"
+import { GameState } from "@/types";
+import { getGame, setGame } from "@/app/api/games"
 
 export async function POST(
-    request: NextRequest,
+    _request: NextRequest,
     { params }: { params: { roomId: string } }
 ) {
     const { roomId } = params
