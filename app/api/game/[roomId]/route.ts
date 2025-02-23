@@ -1,81 +1,92 @@
-import { type NextRequest, NextResponse } from "next/server"
-import { getGame, setGame, checkWinner } from "@/app/api/games"
+import { type NextRequest, NextResponse } from 'next/server';
+import { getGame, setGame, checkWinner } from '@/app/api/games';
 
-export async function GET(request: NextRequest, { params }: { params: { roomId: string } }) {
-  const { roomId } = params
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { roomId: string } }
+) {
+  const { roomId } = params;
 
   try {
-    const gameState = await getGame(roomId)
+    const gameState = await getGame(roomId);
 
     if (!gameState) {
-      return NextResponse.json({ error: "Game not found" }, { status: 404 })
+      return NextResponse.json({ error: 'Game not found' }, { status: 404 });
     }
 
-    const encoder = new TextEncoder()
+    const encoder = new TextEncoder();
     const stream = new ReadableStream({
       async start(controller) {
         const sendEvent = async () => {
           try {
-            const currentGameState = await getGame(roomId)
+            const currentGameState = await getGame(roomId);
             if (currentGameState) {
-              const data = JSON.stringify(currentGameState)
-              controller.enqueue(encoder.encode(`data: ${data}\n\n`))
+              const data = JSON.stringify(currentGameState);
+              controller.enqueue(encoder.encode(`data: ${data}\n\n`));
             }
           } catch (error) {
-            console.error("Error sending game state:", error)
-            controller.error(error)
+            console.error('Error sending game state:', error);
+            controller.error(error);
           }
-        }
+        };
 
         // Send initial state immediately
-        await sendEvent()
+        await sendEvent();
 
-        const interval = setInterval(sendEvent, 1000)
+        const interval = setInterval(sendEvent, 1000);
 
         return () => {
-          clearInterval(interval)
-        }
+          clearInterval(interval);
+        };
       },
-    })
+    });
 
     return new Response(stream, {
       headers: {
-        "Content-Type": "text/event-stream",
-        "Cache-Control": "no-cache",
-        Connection: "keep-alive",
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        Connection: 'keep-alive',
       },
-    })
+    });
   } catch (error) {
-    console.error("Error in GET handler:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    console.error('Error in GET handler:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
   }
 }
 
-export async function POST(request: NextRequest, { params }: { params: { roomId: string } }) {
-  const roomId = params.roomId
+export async function POST(
+  request: NextRequest,
+  { params }: { params: { roomId: string } }
+) {
+  const roomId = params.roomId;
 
   try {
-    const { index } = await request.json()
-    const gameState = await getGame(roomId)
+    const { index } = await request.json();
+    const gameState = await getGame(roomId);
 
     if (!gameState) {
-      return NextResponse.json({ error: "Game not found" }, { status: 404 })
+      return NextResponse.json({ error: 'Game not found' }, { status: 404 });
     }
 
     if (gameState.board[index] || gameState.winner) {
-      return NextResponse.json({ error: "Invalid move" }, { status: 400 })
+      return NextResponse.json({ error: 'Invalid move' }, { status: 400 });
     }
 
-    gameState.board[index] = gameState.currentPlayer
-    gameState.winner = checkWinner(gameState.board)
-    gameState.currentPlayer = gameState.currentPlayer === "X" ? "O" : "X"
+    gameState.board[index] = gameState.currentPlayer;
+    gameState.winner = checkWinner(gameState.board);
+    gameState.currentPlayer = gameState.currentPlayer === 'X' ? 'O' : 'X';
 
-    await setGame(roomId, gameState)
+    await setGame(roomId, gameState);
 
-    return NextResponse.json(gameState)
+    return NextResponse.json(gameState);
   } catch (error) {
-    console.error("Error in POST handler:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    console.error('Error in POST handler:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
   }
 }
-

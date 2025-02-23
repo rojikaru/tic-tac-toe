@@ -1,23 +1,23 @@
 .card {
-    @apply w-96;
+  @apply w-96;
 }
 
 .grid {
-    @apply grid grid-cols-3 gap-2;
+  @apply grid grid-cols-3 gap-2;
 }
 
 .redText {
-    @apply mt-4 text-center text-red-500;
+  @apply mt-4 text-center text-red-500;
 }
 
 .yellowText {
-    @apply mt-4 text-center text-yellow-500;
+  @apply mt-4 text-center text-yellow-500;
 }
 
 .button {
-    @apply h-24 text-4xl;
+  @apply h-24 text-4xl;
 }
 
 .resetButton {
-    @apply mt-4;
+  @apply mt-4;
 }
