@@ -18,6 +18,9 @@ export async function POST() {
     currentPlayer: 'X',
     winner: null,
     players: {}, // initialize with empty player assignment
+    startingPlayer: 'X',
+    history: [Array(9).fill(null)],
+    moves: [],
   });
   return NextResponse.json({ roomId });
 }

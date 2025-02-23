@@ -2,8 +2,8 @@
   @apply w-96;
 }
 
-.grid {
-  @apply grid grid-cols-3 gap-2;
+.gameContainer {
+  @apply grid grid-cols-3 gap-4 my-4;
 }
 
 .redText {
@@ -20,4 +20,16 @@
 
 .resetButton {
   @apply mt-4;
+}
+
+.historySection {
+  @apply mt-4 p-4 bg-gray-100 rounded-lg;
+
+  & ul {
+    @apply list-none p-0 max-h-40 overflow-y-auto;
+  }
+
+  & li {
+    @apply py-1 px-0.5 text-sm;
+  }
 }

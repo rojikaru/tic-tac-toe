@@ -2,22 +2,23 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { getGame, setGame, checkWinner } from '@/app/api/games';
 
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: { roomId: string } }
 ) {
   const { roomId } = params;
+  const encoder = new TextEncoder();
+  let isClosed = false;
 
   try {
     const gameState = await getGame(roomId);
-
     if (!gameState) {
       return NextResponse.json({ error: 'Game not found' }, { status: 404 });
     }
 
-    const encoder = new TextEncoder();
     const stream = new ReadableStream({
       async start(controller) {
         const sendEvent = async () => {
+          if (isClosed) return;
           try {
             const currentGameState = await getGame(roomId);
             if (currentGameState) {
@@ -26,7 +27,10 @@ export async function GET(
             }
           } catch (error) {
             console.error('Error sending game state:', error);
-            controller.error(error);
+            // Only call controller.error if the stream hasn't been closed.
+            if (!isClosed) {
+              controller.error(error);
+            }
           }
         };
 
@@ -36,6 +40,7 @@ export async function GET(
         const interval = setInterval(sendEvent, 1000);
 
         return () => {
+          isClosed = true;
           clearInterval(interval);
         };
       },

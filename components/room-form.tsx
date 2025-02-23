@@ -41,7 +41,7 @@ export function RoomForm() {
       <CardHeader>
         <CardTitle>Join or Create a Room</CardTitle>
       </CardHeader>
-      <CardContent className={styles.spaceY4}>
+      <CardContent className={'space-y-3'}>
         <Button
           onClick={() => createRoomMutation.mutate()}
           className={styles.fullWidth}

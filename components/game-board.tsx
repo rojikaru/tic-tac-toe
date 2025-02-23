@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import type { GameState } from '@/types';
+import type { Player } from '@/types';
 import { useGameStore } from '@/lib/stores';
 import {
   Button,
@@ -27,9 +27,10 @@ export function GameBoard({ roomId }: GameStateProps) {
     assignedPlayer,
     updateGameState,
     resetGame,
+    moves,
   } = useGameStore();
 
-  const joinGame = useMutation<GameState>({
+  const joinGame = useMutation<{ player: Player }>({
     mutationFn: async () => {
       const response = await fetch(`/api/game/${roomId}/join`, {
         method: 'POST',
@@ -41,7 +42,7 @@ export function GameBoard({ roomId }: GameStateProps) {
       return response.json();
     },
     onSuccess: (data) =>
-      updateGameState({ assignedPlayer: data.assignedPlayer }),
+      updateGameState({ assignedPlayer: data.player }),
     onError: (error) => updateGameState({ error: error.message }),
   });
 
@@ -132,7 +133,7 @@ export function GameBoard({ roomId }: GameStateProps) {
               ? `You are player ${assignedPlayer}`
               : 'You are a spectator'}
         </div>
-        <div className={styles.grid}>
+        <div className={styles.gameContainer}>
           {board.map((cell, index) => (
             <Button
               key={index}
@@ -173,6 +174,16 @@ export function GameBoard({ roomId }: GameStateProps) {
         {isConnecting && (
           <div className={styles.yellowText}>Connecting to server...</div>
         )}
+        <div className={styles.historySection}>
+          <h3>Move History</h3>
+          <ul>
+            {moves.map((move, idx) => (
+              <li key={idx}>
+                {idx + 1}. Player {move.player} ➔ Square {move.index + 1}
+              </li>
+            ))}
+          </ul>
+        </div>
       </CardContent>
     </Card>
   );

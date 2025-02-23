@@ -16,8 +16,11 @@ const initialState: StoreState = {
   currentPlayer: 'X',
   winner: null,
   assignedPlayer: undefined,
+  startingPlayer: null,
   isConnecting: false,
   error: null,
+  moves: [],
+  history: [],
 };
 
 export const useGameStore = create<StoreState & GameActions>((set) => ({
