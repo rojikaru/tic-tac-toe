@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import type { Player, GameState } from '@/app/api/games'
+import { Button } from '@/components/ui'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui'
+import type { Player, GameState } from '@/types'
 
 interface GameBoardProps {
   roomId: string
@@ -80,11 +80,11 @@ export function GameBoard({ roomId }: GameBoardProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ index }),
       })
+      const body = await response.json()
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || "Failed to update game state")
+        setError(body.error || "Failed to update game state")
       }
-      const updatedState = (await response.json()) as GameState
+      const updatedState = body as GameState
       setBoard(updatedState.board)
       setCurrentPlayer(updatedState.currentPlayer)
       setWinner(updatedState.winner)
@@ -100,7 +100,8 @@ export function GameBoard({ roomId }: GameBoardProps) {
         method: "POST",
       })
       if (!response.ok) {
-        throw new Error("Failed to reset game")
+        setError("Failed to reset game");
+        return;
       }
       const updatedState = (await response.json()) as GameState
       setBoard(updatedState.board)
